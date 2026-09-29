@@ -1,10 +1,10 @@
-package main.java.com.example;
+package com.example;
 
 import java.util.*;
 import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class ThreadSafetyPuzzles {
+public class  ThreadSafetyPuzzles {
 
     static class ConfigService {
         private static ConfigService instance;
@@ -31,6 +31,7 @@ public class ThreadSafetyPuzzles {
             return settings.get(key);
         }
     }
+
 
     static class RequestCounterService {
         private volatile int count = 0;
@@ -160,12 +161,13 @@ public class ThreadSafetyPuzzles {
         }
     }
 
-    public class TrickyCache {
+    public static class TrickyCache {
         private final Map<String, String> cache = new ConcurrentHashMap<>();
 
         public void putIfAbsent(String key, String value) {
-            if (!cache.containsKey(key)) {      // check
-                cache.put(key, value);          // act – race possible
+//            cache.putIfAbsent(key, value);
+            if (!cache.containsKey(key)) {
+                cache.put(key, value);
             }
         }
 

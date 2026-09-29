@@ -1,17 +1,13 @@
 package com.example;
 
 import org.openjdk.jcstress.annotations.*;
-import org.openjdk.jcstress.infra.results.IC_Result;
-import org.openjdk.jcstress.infra.results.II_Result;
-import org.openjdk.jcstress.infra.results.IS_Result;
 import org.openjdk.jcstress.infra.results.I_Result;
 
-import java.util.ArrayList;
-import java.util.List;
+import java.util.HashSet;
 
 @JCStressTest
 @Outcome(
-        id = "12, 23",
+        id = "2",
         expect = Expect.ACCEPTABLE,
         desc = "Expected value: 2 items"
 )
@@ -21,18 +17,18 @@ import java.util.List;
         desc = "Unexpected size!"
 )
 @State
-public class TestSum {
+public class HashSetTest {
 
-    private List<Integer> myArray;
+    private HashSet<Integer> myMap;
 
-    public TestSum() {
-        this.myArray = new ArrayList<>();
+    public HashSetTest() {
+        this.myMap = new HashSet<>();
     }
 
     @Actor
     public void writer1() {
         try {
-            myArray.add(1);
+            myMap.add(1);
         } catch (Exception e) {
         }
     }
@@ -40,14 +36,14 @@ public class TestSum {
     @Actor
     public void writer2() {
         try {
-            myArray.add(1);
+            myMap.add(2);
         } catch (Exception e) {
         }
     }
 
     @Arbiter
-    public void arbiter(II_Result r) {
-        r.r1 = myArray.size();
+    public void arbiter(I_Result r) {
+        r.r1 = myMap.size();
     }
 
 }
