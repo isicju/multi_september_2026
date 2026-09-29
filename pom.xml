@@ -22,6 +22,11 @@
       <artifactId>jcstress-core</artifactId>
       <version>${jcstress.version}</version>
     </dependency>
+    <dependency>
+      <groupId>org.openjdk.jol</groupId>
+      <artifactId>jol-core</artifactId>
+      <version>0.17</version>
+    </dependency>
   </dependencies>
 
   <build>
