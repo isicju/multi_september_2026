@@ -1,30 +1,34 @@
 import java.util.HashMap;
 import java.util.Map;
+import java.util.concurrent.locks.Lock;
+import java.util.concurrent.locks.ReentrantLock;
 
-public class BankTransfer {
+public class BankTransferReentrant {
     private Map<Integer, Integer> ledger;
-    private Map<Integer, Object> locks;
-    private final Object LOCK;
+    private Map<Integer, Lock> locks;
 
-    public BankTransfer(Map<Integer, Integer> ledger) {
+    public BankTransferReentrant(Map<Integer, Integer> ledger) {
         if (ledger == null) {
             throw new IllegalStateException("where is ledger,bro?");
         }
         this.ledger = ledger;
         locks = new HashMap<>(ledger.size());
         for (Map.Entry<Integer, Integer> ledgerEntry : ledger.entrySet()) {
-            locks.put(ledgerEntry.getKey(), new Object());
+            locks.put(ledgerEntry.getKey(), new ReentrantLock());
         }
-        LOCK = new Object();
     }
 
     public Integer getBalanceByAccountId(int accountId) {
-        synchronized (getLock(accountId)) {
+        Lock lock = locks.get(accountId);
+        lock.lock();
+        try {
             return ledger.get(accountId);
+        } finally {
+            lock.unlock();
         }
     }
 
-    private Object getLock(Integer accountId) {
+    private Lock getLock(Integer accountId) {
         return locks.get(accountId);
     }
 
@@ -32,7 +36,7 @@ public class BankTransfer {
         if (fromAccountId == toAccountId) {
             return STATUS.SUCCESS;
         }
-        if(amount <= 0) {
+        if (amount <= 0) {
             return STATUS.ERROR_INSUFFICIENT_FOUNDS;
         }
         if (getLock(fromAccountId) == null || getLock(toAccountId) == null) {
@@ -42,8 +46,12 @@ public class BankTransfer {
         int minAccountId = Math.min(fromAccountId, toAccountId);
         int maxAccountId = Math.max(fromAccountId, toAccountId);
 
-        synchronized (getLock(minAccountId)) {
-            synchronized (getLock(maxAccountId)) {
+        Lock minAccountLock = getLock(minAccountId);
+        minAccountLock.lock();
+        try {
+            Lock maxAccountLock = getLock(maxAccountId);
+            maxAccountLock.lock();
+            try {
                 Integer accountBalanceFrom = ledger.get(fromAccountId);
                 Integer accountBalanceTo = ledger.get(toAccountId);
 
@@ -57,7 +65,11 @@ public class BankTransfer {
                 ledger.put(toAccountId, accountBalanceTo + amount);
 
                 return STATUS.SUCCESS;
+            } finally {
+                maxAccountLock.unlock();
             }
+        } finally {
+            minAccountLock.unlock();
         }
     }
 
