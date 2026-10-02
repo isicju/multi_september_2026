@@ -3,6 +3,7 @@ import java.util.Map;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
+import java.util.concurrent.atomic.AtomicInteger;
 
 public class LoadTest {
 //write
@@ -23,10 +24,14 @@ public class LoadTest {
         }
 
 //        BankTransferReentrant bank = new BankTransferReentrant(ledger);
-//        BankTransfer bank = new BankTransfer(ledger);
-        BankTransferSharded bank = new BankTransferSharded(ledger); //6.492
+        BankTransfer bank = new BankTransfer(ledger);
+//        BankTransferSharded bank = new BankTransferSharded(ledger); //6.492
+//        BankTransferCas bank = new BankTransferCas(ledger); //6.492
+//        BankTransferCasArrayList bank = new BankTransferCasArrayList(ledger, 100_000_000); //6.492
 //        BankTransferStamped bank = new BankTransferStamped(ledger);
 //        BankTransferReadWrite bank = new BankTransferReadWrite(ledger);
+        System.out.println("starting...");
+        AtomicInteger integer = new AtomicInteger(0);
         int threadRuns = 1000;
         int threadCount = 50;
         ExecutorService service = Executors.newVirtualThreadPerTaskExecutor();
@@ -44,36 +49,43 @@ public class LoadTest {
                         }
                     }
                     countDownLatch.countDown();
+                    System.out.println(integer.incrementAndGet());
+
+
+
                 }
             });
         }
 
-        ExecutorService readPool = Executors.newVirtualThreadPerTaskExecutor();
-        CountDownLatch readCountDown = new CountDownLatch(threadCount);
-        for (int i = 0; i < threadCount; i++) {
-            int finalI = i;
-            readPool.submit(new Runnable() {
-                @Override
-                public void run() {
-                    for (int j = 0; j < 30_000_000; j++) {
-                        bank.getBalanceByAccountId(finalI);
-                    }
-                    readCountDown.countDown();
-                }
-            });
-        }
+//        ExecutorService readPool = Executors.newVirtualThreadPerTaskExecutor();
+//        CountDownLatch readCountDown = new CountDownLatch(threadCount);
+//        for (int i = 0; i < threadCount; i++) {
+//            int finalI = i;
+//            readPool.submit(new Runnable() {
+//                @Override
+//                public void run() {
+//                    for (int j = 0; j < 30_000_000; j++) {
+//                        bank.getBalanceByAccountId(finalI);
+//                    }
+//                    readCountDown.countDown();
+//                }
+//            });
+//        }
 
 
         countDownLatch.await();
-        readCountDown.await();
+//        readCountDown.await();
 
+        System.out.println("time spend: " + (System.currentTimeMillis() - start) / 1000f);
+
+//        long total = bank.getTotalBalance();
+//        long total = bank.getTotalBalance();
 
         long total = ledger.values().stream().mapToLong(e -> e).sum();
 
         System.out.println("sum before: " + 10_000_000L * 500);
         System.out.println("sum after : " + total);
 
-        System.out.println("time spend: " + (System.currentTimeMillis() - start) / 1000f);
 
         service.shutdown();
     }
